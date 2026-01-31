@@ -12,6 +12,25 @@ function arg(name, def = null) {
   return v;
 }
 
+function argsAll(name) {
+  const out = [];
+  for (let i = 0; i < process.argv.length; i++) {
+    if (process.argv[i] !== `--${name}`) continue;
+    const v = process.argv[i + 1];
+    if (v && !v.startsWith('--')) out.push(v);
+  }
+  return out;
+}
+
+function slugify(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 64);
+}
+
 function mustEnv(name) {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env: ${name}`);
@@ -60,7 +79,7 @@ async function openRouterChat({ apiKey, messages }) {
   return content;
 }
 
-function buildPrompt({ projectName, since, until, commits }) {
+function buildPrompt({ projectSlug, projectName, since, until, commits }) {
   return [
     {
       role: 'system',
@@ -68,17 +87,18 @@ function buildPrompt({ projectName, since, until, commits }) {
         'You are generating a concise, user-facing weekly changelog from git commits. ' +
         'Output MUST be valid Markdown with a YAML frontmatter block at the top. ' +
         'Do not include code fences around the YAML. ' +
-        'Use short, clear bullet points grouped under headings. ' +
+        'Write in simple, skimmable bullets. ' +
         'Do NOT mention internal file paths. ' +
-        'Do NOT invent features not present in commits. ' +
-        'If commits are too low-signal, produce a small but accurate changelog.'
+        'Do NOT invent features not present in commits.'
     },
     {
       role: 'user',
       content:
         `Project: ${projectName}\n` +
+        `ProjectSlug: ${projectSlug}\n` +
         `Range: ${since} → ${until}\n\n` +
         'Write a changelog entry with frontmatter matching this schema:\n' +
+        '- project: string (use ProjectSlug)\n' +
         '- week: string (optional)\n' +
         '- date: YYYY-MM-DD\n' +
         '- title: string\n' +
@@ -86,7 +106,7 @@ function buildPrompt({ projectName, since, until, commits }) {
         '- isMajor: boolean (optional)\n' +
         '- author: string (optional)\n' +
         '- changes: list of { type, title, description } where type in [feature, improvement, fix, breaking, docs, chore]\n\n' +
-        'Then the markdown body should be a 1-2 paragraph narrative summary.\n\n' +
+        'Body: 4-8 bullet points (not paragraphs). Keep them user-facing.\n\n' +
         'COMMITS (hash\tsubject\tbody):\n' +
         commits
     }
@@ -102,38 +122,52 @@ function ensureFrontmatter(md) {
 }
 
 async function main() {
-  const repo = arg('repo', process.cwd());
-  const projectName = arg('project', path.basename(repo));
-
   const since = arg('since', '7 days ago');
   const until = arg('until', 'now');
 
-  // Capture subject + body, tab-separated for easy parsing
-  const log = sh(`git log --since=${JSON.stringify(since)} --until=${JSON.stringify(until)} --pretty=format:%H\\t%s\\t%b --no-merges`, repo);
-  if (!log) {
-    console.log('No commits in range; nothing to generate.');
-    process.exit(0);
+  const repos = argsAll('repo');
+  const projects = argsAll('project');
+
+  if (!repos.length) {
+    throw new Error('Pass at least one --repo <path>. You can pass multiple --repo flags.');
   }
 
   const apiKey = mustEnv('OPENROUTER_API_KEY');
 
-  const messages = buildPrompt({
-    projectName,
-    since,
-    until,
-    commits: log
-  });
-
-  const out = await openRouterChat({ apiKey, messages });
-  const md = ensureFrontmatter(out);
-
   const outDir = path.join(process.cwd(), 'src', 'content', 'changelog');
   fs.mkdirSync(outDir, { recursive: true });
 
-  const file = path.join(outDir, `${isoDate()}.md`);
-  fs.writeFileSync(file, md.trim() + '\n', 'utf8');
+  for (let i = 0; i < repos.length; i++) {
+    const repo = repos[i];
+    const projectName = projects[i] || path.basename(repo);
+    const projectSlug = slugify(projectName);
 
-  console.log(`Wrote: ${file}`);
+    const log = sh(
+      `git log --since=${JSON.stringify(since)} --until=${JSON.stringify(until)} --pretty=format:%H\\t%s\\t%b --no-merges`,
+      repo,
+    );
+
+    if (!log) {
+      console.log(`No commits in range for ${projectName}; skipping.`);
+      continue;
+    }
+
+    const messages = buildPrompt({
+      projectSlug,
+      projectName,
+      since,
+      until,
+      commits: log,
+    });
+
+    const out = await openRouterChat({ apiKey, messages });
+    const md = ensureFrontmatter(out);
+
+    const file = path.join(outDir, `${isoDate()}-${projectSlug}.md`);
+    fs.writeFileSync(file, md.trim() + '\n', 'utf8');
+
+    console.log(`Wrote: ${file}`);
+  }
 }
 
 main().catch((e) => {

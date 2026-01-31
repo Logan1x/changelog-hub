@@ -5,6 +5,7 @@ import { glob } from 'astro/loaders';
 const changelog = defineCollection({
 	loader: glob({ base: './src/content/changelog', pattern: '**/*.md' }),
 	schema: z.object({
+		project: z.string().min(1),
 		week: z.string().optional(),
 		date: z.coerce.date(),
 		title: z.string(),
