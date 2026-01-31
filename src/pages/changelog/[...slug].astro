@@ -4,6 +4,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
+import Badge from '../../components/Badge.astro';
 
 export async function getStaticPaths() {
 	const entries = await getCollection('changelog');
@@ -35,7 +36,7 @@ const { Content } = await render(entry);
 					<span><FormattedDate date={entry.data.date} /></span>
 					{entry.data.week ? <span>• {entry.data.week}</span> : null}
 					{entry.data.author ? <span>• {entry.data.author}</span> : null}
-					<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">{entry.data.project}</span>
+					<Badge variant="secondary">{entry.data.project}</Badge>
 				</div>
 				{entry.data.summary ? <p class="mt-4 text-sm text-zinc-400">{entry.data.summary}</p> : null}
 			</header>
@@ -48,7 +49,7 @@ const { Content } = await render(entry);
 							<li>
 								<div class="flex flex-wrap items-center gap-2">
 									{c.type ? (
-										<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">{c.type}</span>
+										<Badge variant={c.type}>{c.type}</Badge>
 									) : null}
 									<span class="font-medium text-zinc-100">{c.title}</span>
 								</div>

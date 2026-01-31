@@ -1,0 +1,36 @@
+---
+type Variant =
+	| 'default'
+	| 'secondary'
+	| 'outline'
+	| 'feature'
+	| 'improvement'
+	| 'fix'
+	| 'breaking'
+	| 'muted';
+
+const {
+	variant = 'default',
+	class: className = '',
+} = Astro.props as { variant?: Variant; class?: string };
+
+const base =
+	'inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none whitespace-nowrap select-none';
+
+const variants: Record<string, string> = {
+	default: 'border-emerald-500/30 bg-emerald-500/12 text-emerald-200',
+	secondary: 'border-white/10 bg-white/6 text-zinc-200',
+	outline: 'border-white/12 bg-transparent text-zinc-200',
+	feature: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+	improvement: 'border-sky-500/30 bg-sky-500/10 text-sky-200',
+	fix: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
+	breaking: 'border-rose-500/30 bg-rose-500/10 text-rose-200',
+	muted: 'border-white/10 bg-white/5 text-zinc-300',
+};
+
+const cls = `${base} ${variants[variant] ?? variants.default} ${className}`.trim();
+---
+
+<span class={cls} data-variant={variant}>
+	<slot />
+</span>
