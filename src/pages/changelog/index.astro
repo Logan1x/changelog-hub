@@ -11,162 +11,80 @@ const entries = (await getCollection('changelog')).sort(
 );
 
 function tone(type) {
-	if (type === 'feature') return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30';
-	if (type === 'improvement') return 'bg-sky-500/15 text-sky-200 border-sky-500/30';
-	if (type === 'fix') return 'bg-amber-500/15 text-amber-200 border-amber-500/30';
-	return 'bg-neutral-800/50 text-neutral-200 border-neutral-700';
+	if (type === 'feature') return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200';
+	if (type === 'improvement') return 'border-sky-500/30 bg-sky-500/10 text-sky-200';
+	if (type === 'fix') return 'border-amber-500/30 bg-amber-500/10 text-amber-200';
+	if (type === 'breaking') return 'border-rose-500/30 bg-rose-500/10 text-rose-200';
+	return 'border-white/10 bg-white/5 text-zinc-300';
 }
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={`${SITE_TITLE} — Changelog`} description="Weekly product changelogs" />
+		<BaseHead title={`${SITE_TITLE} — Changelog`} description="Weekly changelogs" />
 	</head>
 	<body>
 		<Header />
-		<main>
-			<header class="hero">
-				<h1>Changelog</h1>
-				<p class="sub">Weekly releases and noteworthy changes.</p>
-			</header>
+		<main class="mx-auto max-w-5xl px-4 py-10">
+			<div class="flex items-end justify-between gap-4">
+				<div>
+					<h1 class="text-2xl font-semibold tracking-tight">Changelog</h1>
+					<p class="mt-1 text-sm text-zinc-400">Weekly releases generated from commit history.</p>
+				</div>
+				<div class="text-xs text-zinc-500">{entries.length} entries</div>
+			</div>
 
-			<section class="list">
+			<div class="mt-6 grid gap-3">
 				{entries.length ? (
-					<ul>
-						{entries.map((e) => (
-							<li class="card">
-								<a class="cardLink" href={`/changelog/${e.id}/`}>
-									<div class="top">
-										<div>
-											<h2 class="title">{e.data.title}</h2>
-											<p class="meta">
-												<FormattedDate date={e.data.date} />
-												{e.data.week ? <span class="dot">•</span> : null}
-												{e.data.week ? <span>{e.data.week}</span> : null}
-											</p>
-										</div>
-										{e.data.isMajor ? <span class="pill major">Major</span> : null}
-									</div>
-
-									{e.data.summary ? <p class="summary">{e.data.summary}</p> : null}
-
-									<div class="changes">
-										{(e.data.changes || []).slice(0, 4).map((c) => (
-											<span class={`pill ${tone(c.type)}`}>
-												{c.type}
+					entries.map((e) => (
+						<a
+							class="group rounded-2xl border border-white/10 bg-ink-900/40 p-5 hover:border-white/15 hover:bg-ink-900/60"
+							href={`/changelog/${e.id}/`}
+						>
+							<div class="flex items-start justify-between gap-4">
+								<div class="min-w-0">
+									<div class="flex flex-wrap items-center gap-2">
+										<h2 class="truncate text-base font-semibold text-zinc-100 group-hover:text-white">
+											{e.data.title}
+										</h2>
+										{e.data.isMajor ? (
+											<span class="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">
+												Major
 											</span>
-										))}
-										{(e.data.changes || []).length > 4 ? (
-											<span class="pill more">+{(e.data.changes || []).length - 4}</span>
 										) : null}
 									</div>
-								</a>
-							</li>
-						))}
-					</ul>
+									<div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+										<span><FormattedDate date={e.data.date} /></span>
+										{e.data.week ? <span>• {e.data.week}</span> : null}
+									</div>
+									{e.data.summary ? (
+										<p class="mt-3 text-sm text-zinc-400">{e.data.summary}</p>
+									) : null}
+								</div>
+							</div>
+
+							<div class="mt-4 flex flex-wrap gap-2">
+								{(e.data.changes || []).slice(0, 6).map((c) => (
+									<span class={`rounded-full border px-2 py-0.5 text-[11px] ${tone(c.type)}`}>
+										{c.type || 'change'}
+									</span>
+								))}
+								{(e.data.changes || []).length > 6 ? (
+									<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-zinc-300">
+										+{(e.data.changes || []).length - 6}
+									</span>
+								) : null}
+							</div>
+						</a>
+					))
 				) : (
-					<p class="empty">No changelog entries yet.</p>
+					<div class="rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-zinc-500">
+						No changelog entries yet.
+					</div>
 				)}
-			</section>
+			</div>
 		</main>
 		<Footer />
 	</body>
 </html>
-
-<style>
-	main {
-		max-width: 980px;
-		margin: 0 auto;
-		padding: 2rem 1rem 3rem;
-	}
-	.hero {
-		padding: 1.25rem 0 1.5rem;
-	}
-	h1 {
-		margin: 0;
-		font-size: 2rem;
-		line-height: 1.1;
-	}
-	.sub {
-		margin: 0.5rem 0 0;
-		color: rgb(var(--gray));
-	}
-	.list ul {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		gap: 1rem;
-	}
-	.card {
-		border-radius: 16px;
-		border: 1px solid rgba(var(--gray), 0.2);
-		background: white;
-		box-shadow: 0 2px 18px rgba(var(--black), 0.04);
-		overflow: hidden;
-	}
-	.cardLink {
-		display: block;
-		padding: 1rem;
-		text-decoration: none;
-		color: inherit;
-	}
-	.cardLink:hover {
-		box-shadow: 0 8px 26px rgba(var(--black), 0.08);
-	}
-	.top {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: 1rem;
-	}
-	.title {
-		margin: 0;
-		font-size: 1.15rem;
-		line-height: 1.2;
-		color: rgb(var(--black));
-	}
-	.meta {
-		margin: 0.35rem 0 0;
-		font-size: 0.9rem;
-		color: rgb(var(--gray));
-		display: flex;
-		gap: 0.4rem;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-	.dot {
-		opacity: 0.6;
-	}
-	.summary {
-		margin: 0.75rem 0 0;
-		color: rgba(var(--black), 0.72);
-	}
-	.changes {
-		margin-top: 0.9rem;
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-	}
-	.pill {
-		border-radius: 999px;
-		border: 1px solid rgba(var(--gray), 0.2);
-		padding: 0.2rem 0.55rem;
-		font-size: 0.75rem;
-		letter-spacing: 0.02em;
-	}
-	.major {
-		background: rgba(var(--accent), 0.1);
-		border-color: rgba(var(--accent), 0.25);
-		color: rgb(var(--accent));
-	}
-	.more {
-		background: rgba(var(--gray), 0.12);
-		border-color: rgba(var(--gray), 0.22);
-		color: rgb(var(--gray));
-	}
-	.empty {
-		color: rgb(var(--gray));
-	}
-</style>

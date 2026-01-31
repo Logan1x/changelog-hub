@@ -12,13 +12,19 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	</head>
 	<body>
 		<Header />
-		<main>
-			<h1>Changelog Hub</h1>
-			<p>Weekly changelogs for your projects. Start here:</p>
-			<ul>
-				<li><a href="/changelog">View Changelog</a></li>
-				<li><a href="/blog">Blog</a></li>
-			</ul>
+		<main class="mx-auto max-w-5xl px-4 py-10">
+			<div class="rounded-2xl border border-white/10 bg-ink-900/40 p-6">
+				<h1 class="text-2xl font-semibold tracking-tight">Changelog Hub</h1>
+				<p class="mt-2 text-sm text-zinc-400">A dedicated changelog website. No blog, no extras.</p>
+				<div class="mt-5">
+					<a
+						href="/changelog"
+						class="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-ink-950 hover:bg-emerald-400"
+					>
+						View changelog
+					</a>
+				</div>
+			</div>
 		</main>
 		<Footer />
 	</body>

@@ -26,65 +26,23 @@ const { Content } = await render(entry);
 	</head>
 	<body>
 		<Header />
-		<main>
-			<a class="back" href="/changelog">← Back to changelog</a>
-			<header class="hero">
-				<h1>{entry.data.title}</h1>
-				<p class="meta">
-					<FormattedDate date={entry.data.date} />
-					{entry.data.week ? <span class="dot">•</span> : null}
-					{entry.data.week ? <span>{entry.data.week}</span> : null}
-				</p>
-				{entry.data.summary ? <p class="summary">{entry.data.summary}</p> : null}
+		<main class="mx-auto max-w-3xl px-4 py-10">
+			<a href="/changelog" class="text-sm text-zinc-400 hover:text-zinc-200">← Back</a>
+
+			<header class="mt-5 rounded-2xl border border-white/10 bg-ink-900/40 p-6">
+				<h1 class="text-2xl font-semibold tracking-tight">{entry.data.title}</h1>
+				<div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+					<span><FormattedDate date={entry.data.date} /></span>
+					{entry.data.week ? <span>• {entry.data.week}</span> : null}
+					{entry.data.author ? <span>• {entry.data.author}</span> : null}
+				</div>
+				{entry.data.summary ? <p class="mt-4 text-sm text-zinc-400">{entry.data.summary}</p> : null}
 			</header>
 
-			<article class="content">
+			<article class="prose prose-invert mt-6 max-w-none prose-headings:scroll-mt-24 prose-a:text-emerald-300 prose-a:no-underline hover:prose-a:text-emerald-200">
 				<Content />
 			</article>
 		</main>
 		<Footer />
 	</body>
 </html>
-
-<style>
-	main {
-		max-width: 860px;
-		margin: 0 auto;
-		padding: 2rem 1rem 3rem;
-	}
-	.back {
-		display: inline-block;
-		color: rgb(var(--accent));
-		text-decoration: none;
-		margin-bottom: 1.25rem;
-	}
-	.hero h1 {
-		margin: 0;
-		font-size: 2.1rem;
-		line-height: 1.15;
-	}
-	.meta {
-		margin: 0.5rem 0 0;
-		color: rgb(var(--gray));
-		display: flex;
-		gap: 0.5rem;
-		align-items: center;
-		flex-wrap: wrap;
-	}
-	.dot {
-		opacity: 0.6;
-	}
-	.summary {
-		margin: 0.85rem 0 0;
-		color: rgba(var(--black), 0.72);
-		font-size: 1.05rem;
-	}
-	.content :global(h2) {
-		margin-top: 1.75rem;
-	}
-	.content {
-		margin-top: 1.5rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid rgba(var(--gray), 0.2);
-	}
-</style>
