@@ -1,8 +1,20 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import Badge from '../components/Badge.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { PROJECTS } from '../projects';
+
+const entries = await getCollection('changelog');
+
+function latestFor(slug) {
+	return entries
+		.filter((e) => e.data.project === slug)
+		.sort((a, b) => (b.data.date?.valueOf?.() ?? 0) - (a.data.date?.valueOf?.() ?? 0))[0];
+}
 ---
 
 <!doctype html>
@@ -14,16 +26,48 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 		<Header />
 		<main class="mx-auto max-w-5xl px-4 py-10">
 			<div class="rounded-2xl border border-white/10 bg-ink-900/40 p-6">
-				<h1 class="text-2xl font-semibold tracking-tight">Changelog Hub</h1>
-				<p class="mt-2 text-sm text-zinc-400">A dedicated changelog website. No blog, no extras.</p>
-				<div class="mt-5">
-					<a
-						href="/changelog"
-						class="inline-flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-ink-950 hover:bg-emerald-400"
-					>
-						View changelog
-					</a>
-				</div>
+				<h1 class="text-3xl font-semibold tracking-tight">Changelog Hub</h1>
+				<p class="mt-2 text-sm text-zinc-400">Pick a repo to view its changelog timeline.</p>
+			</div>
+
+			<div class="mt-8 grid gap-4 sm:grid-cols-2">
+				{PROJECTS.map((p) => {
+					const latest = latestFor(p.slug);
+					return (
+						<a
+							href={`/projects/${p.slug}/`}
+							class="group rounded-2xl border border-white/10 bg-ink-900/35 p-6 hover:border-white/15 hover:bg-ink-900/55"
+						>
+							<div class="flex items-start justify-between gap-4">
+								<div class="min-w-0">
+									<div class="flex items-center gap-2">
+										<h2 class="truncate text-lg font-semibold text-zinc-100 group-hover:text-white">{p.name}</h2>
+										<Badge variant="secondary">Repo</Badge>
+									</div>
+									<p class="mt-1 text-sm text-zinc-500">Timeline view →</p>
+								</div>
+
+								{latest ? (
+									<div class="shrink-0 text-right">
+										<div class="text-[11px] text-zinc-500">Latest</div>
+										<div class="mt-1 text-xs text-zinc-300"><FormattedDate date={latest.data.date} /></div>
+									</div>
+								) : (
+									<div class="shrink-0">
+										<Badge variant="muted">No entries</Badge>
+									</div>
+								)}
+							</div>
+
+							{latest ? (
+								<div class="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+									<div class="text-sm font-semibold text-zinc-100">{latest.data.title}</div>
+									{latest.data.summary ? <div class="mt-1 text-sm text-zinc-400">{latest.data.summary}</div> : null}
+								</div>
+							) : null}
+						</a>
+					);
+				})}
 			</div>
 		</main>
 		<Footer />

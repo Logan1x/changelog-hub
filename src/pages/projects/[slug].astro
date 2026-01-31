@@ -1,0 +1,137 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import Badge from '../../components/Badge.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import { PROJECTS } from '../../projects';
+import { SITE_TITLE } from '../../consts';
+
+export async function getStaticPaths() {
+	return PROJECTS.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const proj = PROJECTS.find((p) => p.slug === slug);
+if (!proj) throw new Error(`Unknown project: ${slug}`);
+
+const all = await getCollection('changelog');
+const entries = all
+	.filter((e) => e.data.project === slug)
+	.sort((a, b) => (b.data.date?.valueOf?.() ?? 0) - (a.data.date?.valueOf?.() ?? 0));
+
+function tone(type) {
+	if (type === 'feature') return 'feature';
+	if (type === 'improvement') return 'improvement';
+	if (type === 'fix') return 'fix';
+	if (type === 'breaking') return 'breaking';
+	return 'muted';
+}
+
+function yearOf(d) {
+	try {
+		return new Date(d).getFullYear();
+	} catch {
+		return '';
+	}
+}
+
+const years = Array.from(new Set(entries.map((e) => yearOf(e.data.date)))).filter(Boolean);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${proj.name} — ${SITE_TITLE}`} description={`Changelog timeline for ${proj.name}`} />
+	</head>
+	<body>
+		<Header />
+		<main class="mx-auto max-w-5xl px-4 py-10">
+			<div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+				<div>
+					<a href="/" class="text-sm text-zinc-400 hover:text-zinc-200">← Back to projects</a>
+					<h1 class="mt-3 text-3xl font-semibold tracking-tight">{proj.name}</h1>
+					<p class="mt-2 text-sm text-zinc-400">Timeline of changelog runs (latest first).</p>
+				</div>
+				<div class="flex items-center gap-2">
+					<Badge variant="secondary">{entries.length} entries</Badge>
+				</div>
+			</div>
+
+			{!entries.length ? (
+				<div class="mt-8 rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-zinc-500">
+					No changelog entries yet for this project.
+				</div>
+			) : (
+				<div class="mt-10">
+					{/* Timeline */}
+					<div class="relative">
+						<div class="pointer-events-none absolute left-3 top-0 h-full w-px bg-white/10" />
+
+						<div class="grid gap-10">
+							{years.map((yr) => (
+								<section>
+									<div class="mb-6 pl-10 text-4xl font-semibold tracking-tight text-white/10">{yr}</div>
+									<div class="grid gap-6">
+										{entries
+											.filter((e) => String(yearOf(e.data.date)) === String(yr))
+											.map((e) => (
+												<div class="relative pl-10">
+													<div class="absolute left-0 top-5 flex h-6 w-6 items-center justify-center">
+														<div class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.12)]" />
+													</div>
+
+													<div class="rounded-2xl border border-white/10 bg-ink-900/40 p-6 hover:bg-ink-900/55">
+														<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+															<div class="min-w-0">
+																<div class="text-xs text-zinc-500">
+																	Week of <FormattedDate date={e.data.date} />
+																</div>
+																<a
+																	href={`/changelog/${e.id}/`}
+																	class="mt-2 block text-xl font-semibold tracking-tight text-zinc-100 hover:text-white"
+																>
+																	{e.data.title}
+																</a>
+																{e.data.summary ? <p class="mt-2 text-sm text-zinc-400">{e.data.summary}</p> : null}
+															</div>
+
+															<div class="flex flex-wrap items-center gap-2">
+																{e.data.isMajor ? <Badge variant="default">Major</Badge> : null}
+																<Badge variant="secondary"><FormattedDate date={e.data.date} /></Badge>
+															</div>
+														</div>
+
+														{/* Highlights */}
+														{(e.data.changes || []).length ? (
+															<div class="mt-5 grid gap-3">
+																{(e.data.changes || []).slice(0, 6).map((c) => (
+																	<div class="flex gap-3 rounded-xl border border-white/10 bg-black/20 p-4">
+																		<div class="pt-0.5">
+																			<Badge variant={tone(c.type)}>{(c.type || 'change').toUpperCase()}</Badge>
+																		</div>
+																		<div class="min-w-0">
+																			<div class="text-sm font-semibold text-zinc-100">{c.title}</div>
+																			{c.description ? <div class="mt-1 text-sm text-zinc-400">{c.description}</div> : null}
+																		</div>
+																	</div>
+																))}
+															</div>
+														) : (
+															<div class="mt-5 text-sm text-zinc-500">No highlights listed.</div>
+														)}
+													</div>
+												</div>
+											))}
+									</div>
+								</section>
+							))}
+						</div>
+					</div>
+				</div>
+			)}
+		</main>
+		<Footer />
+	</body>
+</html>
