@@ -1,0 +1,172 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import { SITE_TITLE } from '../../consts';
+
+const entries = (await getCollection('changelog')).sort(
+	(a, b) => (b.data.date?.valueOf?.() ?? 0) - (a.data.date?.valueOf?.() ?? 0),
+);
+
+function tone(type) {
+	if (type === 'feature') return 'bg-emerald-500/15 text-emerald-200 border-emerald-500/30';
+	if (type === 'improvement') return 'bg-sky-500/15 text-sky-200 border-sky-500/30';
+	if (type === 'fix') return 'bg-amber-500/15 text-amber-200 border-amber-500/30';
+	return 'bg-neutral-800/50 text-neutral-200 border-neutral-700';
+}
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`${SITE_TITLE} — Changelog`} description="Weekly product changelogs" />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<header class="hero">
+				<h1>Changelog</h1>
+				<p class="sub">Weekly releases and noteworthy changes.</p>
+			</header>
+
+			<section class="list">
+				{entries.length ? (
+					<ul>
+						{entries.map((e) => (
+							<li class="card">
+								<a class="cardLink" href={`/changelog/${e.id}/`}>
+									<div class="top">
+										<div>
+											<h2 class="title">{e.data.title}</h2>
+											<p class="meta">
+												<FormattedDate date={e.data.date} />
+												{e.data.week ? <span class="dot">•</span> : null}
+												{e.data.week ? <span>{e.data.week}</span> : null}
+											</p>
+										</div>
+										{e.data.isMajor ? <span class="pill major">Major</span> : null}
+									</div>
+
+									{e.data.summary ? <p class="summary">{e.data.summary}</p> : null}
+
+									<div class="changes">
+										{(e.data.changes || []).slice(0, 4).map((c) => (
+											<span class={`pill ${tone(c.type)}`}>
+												{c.type}
+											</span>
+										))}
+										{(e.data.changes || []).length > 4 ? (
+											<span class="pill more">+{(e.data.changes || []).length - 4}</span>
+										) : null}
+									</div>
+								</a>
+							</li>
+						))}
+					</ul>
+				) : (
+					<p class="empty">No changelog entries yet.</p>
+				)}
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	main {
+		max-width: 980px;
+		margin: 0 auto;
+		padding: 2rem 1rem 3rem;
+	}
+	.hero {
+		padding: 1.25rem 0 1.5rem;
+	}
+	h1 {
+		margin: 0;
+		font-size: 2rem;
+		line-height: 1.1;
+	}
+	.sub {
+		margin: 0.5rem 0 0;
+		color: rgb(var(--gray));
+	}
+	.list ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 1rem;
+	}
+	.card {
+		border-radius: 16px;
+		border: 1px solid rgba(var(--gray), 0.2);
+		background: white;
+		box-shadow: 0 2px 18px rgba(var(--black), 0.04);
+		overflow: hidden;
+	}
+	.cardLink {
+		display: block;
+		padding: 1rem;
+		text-decoration: none;
+		color: inherit;
+	}
+	.cardLink:hover {
+		box-shadow: 0 8px 26px rgba(var(--black), 0.08);
+	}
+	.top {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.title {
+		margin: 0;
+		font-size: 1.15rem;
+		line-height: 1.2;
+		color: rgb(var(--black));
+	}
+	.meta {
+		margin: 0.35rem 0 0;
+		font-size: 0.9rem;
+		color: rgb(var(--gray));
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+	.dot {
+		opacity: 0.6;
+	}
+	.summary {
+		margin: 0.75rem 0 0;
+		color: rgba(var(--black), 0.72);
+	}
+	.changes {
+		margin-top: 0.9rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+	.pill {
+		border-radius: 999px;
+		border: 1px solid rgba(var(--gray), 0.2);
+		padding: 0.2rem 0.55rem;
+		font-size: 0.75rem;
+		letter-spacing: 0.02em;
+	}
+	.major {
+		background: rgba(var(--accent), 0.1);
+		border-color: rgba(var(--accent), 0.25);
+		color: rgb(var(--accent));
+	}
+	.more {
+		background: rgba(var(--gray), 0.12);
+		border-color: rgba(var(--gray), 0.22);
+		color: rgb(var(--gray));
+	}
+	.empty {
+		color: rgb(var(--gray));
+	}
+</style>
