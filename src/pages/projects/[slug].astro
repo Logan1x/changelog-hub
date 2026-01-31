@@ -82,7 +82,7 @@ const years = Array.from(new Set(entries.map((e) => yearOf(e.data.date)))).filte
 														<div class="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_0_6px_rgba(16,185,129,0.12)]" />
 													</div>
 
-													<div class="relative rounded-2xl border border-white/10 bg-ink-900/40 p-6 hover:bg-ink-900/55">
+													<div class="rounded-2xl border border-white/10 bg-ink-900/40 p-6 hover:bg-ink-900/55">
 														<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 															<div class="min-w-0">
 																<div class="text-xs text-zinc-500">
@@ -97,20 +97,20 @@ const years = Array.from(new Set(entries.map((e) => yearOf(e.data.date)))).filte
 																{e.data.summary ? <p class="mt-2 text-sm text-zinc-400">{e.data.summary}</p> : null}
 															</div>
 
-															<div class="absolute right-6 top-6 flex flex-wrap items-center gap-2">
-																				{e.data.isMajor ? <Badge variant="default">Major</Badge> : null}
-																				<Badge variant="secondary"><FormattedDate date={e.data.date} /></Badge>
-																			</div>
+															<div class="flex flex-wrap items-center gap-2">
+  {e.data.isMajor ? <Badge variant="default">Major</Badge> : null}
+  <Badge variant="secondary"><FormattedDate date={e.data.date} /></Badge>
+</div>
 														</div>
 
 														{/* Highlights */}
 														{(e.data.changes || []).length ? (
 															<div class="mt-5 grid gap-3">
 																{(e.data.changes || []).slice(0, 6).map((c) => (
-																	<div class="flex gap-3 rounded-xl border border-white/10 bg-black/20 p-4">
-																		<div class="pt-0.5">
-																			<Badge variant={tone(c.type)}>{(c.type || 'change').toUpperCase()}</Badge>
-																		</div>
+																	<div class="rounded-xl border border-white/10 bg-black/20 p-4">
+																					<div class="mb-2">
+																						<Badge variant={tone(c.type)}>{(c.type || 'change').toUpperCase()}</Badge>
+																					</div>
 																		<div class="min-w-0">
 																			<div class="text-sm font-semibold text-zinc-100">{c.title}</div>
 																			{c.description ? <div class="mt-1 text-sm text-zinc-400">{c.description}</div> : null}
