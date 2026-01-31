@@ -79,28 +79,32 @@ async function openRouterChat({ apiKey, messages }) {
   return content;
 }
 
-function buildPrompt({ projectSlug, projectName, since, until, commits }) {
+function buildPrompt({ today, projectSlug, projectName, since, until, commits }) {
   return [
     {
       role: 'system',
       content:
         'You are generating a concise, user-facing weekly changelog from git commits. ' +
+        'CRITICAL: Your response MUST begin with a YAML frontmatter block. ' +
+        'The very first characters of the response MUST be three dashes: --- on its own line. ' +
         'Output MUST be valid Markdown with a YAML frontmatter block at the top. ' +
         'Do not include code fences around the YAML. ' +
         'Write in simple, skimmable bullets. ' +
         'Do NOT mention internal file paths. ' +
-        'Do NOT invent features not present in commits.'
+        'Do NOT invent features not present in commits. ' +
+        'Return ONLY the markdown document.'
     },
     {
       role: 'user',
       content:
         `Project: ${projectName}\n` +
         `ProjectSlug: ${projectSlug}\n` +
+        `Today: ${today} (you MUST use this exact date in frontmatter.date)\n` +
         `Range: ${since} → ${until}\n\n` +
         'Write a changelog entry with frontmatter matching this schema:\n' +
         '- project: string (use ProjectSlug)\n' +
         '- week: string (optional)\n' +
-        '- date: YYYY-MM-DD\n' +
+        '- date: YYYY-MM-DD (MUST equal Today)\n' +
         '- title: string\n' +
         '- summary: string (optional)\n' +
         '- isMajor: boolean (optional)\n' +
@@ -114,11 +118,19 @@ function buildPrompt({ projectSlug, projectName, since, until, commits }) {
 }
 
 function ensureFrontmatter(md) {
-  const trimmed = String(md || '').trimStart();
-  if (!trimmed.startsWith('---')) {
-    throw new Error('Model output missing YAML frontmatter starting with ---');
+  const raw = String(md || '');
+  const trimmed = raw.trimStart();
+  if (trimmed.startsWith('---')) return trimmed;
+
+  // Try to recover if the model prepended chatter.
+  const first = trimmed.indexOf('---');
+  if (first !== -1) {
+    const recovered = trimmed.slice(first).trimStart();
+    if (recovered.startsWith('---')) return recovered;
   }
-  return md;
+
+  const preview = trimmed.slice(0, 280).replace(/\s+/g, ' ');
+  throw new Error(`Model output missing YAML frontmatter starting with --- (preview: ${preview})`);
 }
 
 async function main() {
@@ -153,6 +165,7 @@ async function main() {
     }
 
     const messages = buildPrompt({
+      today: isoDate(),
       projectSlug,
       projectName,
       since,
