@@ -7,4 +7,8 @@ export const PROJECTS = [
     slug: 'uptime-monitor',
     name: 'Uptime Monitor',
   },
+  {
+    slug: 'ftb-kreeate',
+    name: 'FTB Kreeate',
+  },
 ] as const;
